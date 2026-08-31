@@ -1,0 +1,100 @@
+// Модель данных цифровой визитки.
+//
+// Profile — singleton: одна визитка одного человека, адресуемая по фиксированному
+// естественному ключу `slug`. Всё остальное висит на нём один-ко-многим.
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // рантайм: pooled endpoint
+  directUrl = env("DIRECT_URL") // Prisma CLI: миграции и сид
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum SkillCategory {
+  FRONTEND
+  BACKEND
+  AI
+  TOOLS
+}
+
+model Profile {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  description String
+  skills      Skill[]
+  experience  Experience[]
+  projects    Project[]
+  links       ProfileLink[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Skill {
+  id        String        @id @default(cuid())
+  profileId String
+  profile   Profile       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  name      String
+  category  SkillCategory
+  order     Int
+
+  @@unique([profileId, name])
+  @@index([profileId, category])
+}
+
+model Experience {
+  id           String        @id @default(cuid())
+  profileId    String
+  profile      Profile       @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  company      String
+  position     String
+  /// Точность — до месяца: день начала фриланс-заказа это ложная точность.
+  startDate    DateTime
+  /// null = работа над заказом продолжается.
+  endDate      DateTime?
+  achievements Achievement[]
+
+  @@unique([profileId, company, position, startDate])
+  @@index([profileId])
+}
+
+model Achievement {
+  id           String     @id @default(cuid())
+  experienceId String
+  experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  text         String
+  order        Int
+
+  @@index([experienceId])
+}
+
+model Project {
+  id          String  @id @default(cuid())
+  profileId   String
+  profile     Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  name        String
+  /// Инвариант «repoUrl ?? liveUrl» проверяется в сиде и в сервисе:
+  /// в БД его нельзя выразить без CHECK-констрейнта, которого Prisma не даёт.
+  repoUrl     String?
+  liveUrl     String?
+  description String?
+  order       Int
+
+  @@unique([profileId, name])
+  @@index([profileId])
+}
+
+model ProfileLink {
+  id        String  @id @default(cuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  label     String
+  url       String
+  order     Int
+
+  @@unique([profileId, label])
+  @@index([profileId])
+}
