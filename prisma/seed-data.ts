@@ -139,7 +139,7 @@ export const seedData: SeedData = {
     },
     {
       name: 'Бэкенд-визитка',
-      repoUrl: 'https://github.com/mariktennis09-oss/digital-business-card',
+      repoUrl: 'https://github.com/mariktennis09-oss/business-card-website-',
       description: 'Backend-визитка на NestJS, GraphQL, Prisma и Docker — сам этот API.',
     },
   ],
