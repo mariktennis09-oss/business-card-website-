@@ -9,6 +9,13 @@ jobs:
   check:
     runs-on: ubuntu-latest
 
+    # Базы в CI нет и не нужно: все проверки статические. Переменные заданы
+    # потому, что prisma validate резолвит env() в блоке datasource, даже
+    # когда никуда не подключается.
+    env:
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci?schema=public
+      DIRECT_URL: postgresql://ci:ci@localhost:5432/ci?schema=public
+
     steps:
       - uses: actions/checkout@v4
 
