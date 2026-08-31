@@ -1,0 +1,91 @@
+"""Конкретный результат, достигнутый на месте работы."""
+type Achievement {
+  id: ID!
+  text: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+"""Запись об опыте работы."""
+type Experience {
+  achievements: [Achievement!]!
+  company: String!
+
+  """Длительность в месяцах, включая начальный и конечный месяцы."""
+  durationMonths: Int!
+
+  """Окончание работы; null — работа продолжается."""
+  endDate: DateTime
+  id: ID!
+
+  """Работа над проектом продолжается."""
+  isCurrent: Boolean!
+
+  """Период работы одной строкой — хелпер поверх startDate/endDate."""
+  period: String!
+  position: String!
+
+  """Начало работы, точность — до месяца."""
+  startDate: DateTime!
+}
+
+"""Профиль специалиста."""
+type Profile {
+  description: String!
+  experience: [Experience!]!
+  id: ID!
+  links: [ProfileLink!]!
+  name: String!
+  projects: [Project!]!
+  skills(category: SkillCategory): [Skill!]!
+
+  """Постоянный ключ визитки."""
+  slug: String!
+}
+
+"""Ссылка на внешний профессиональный ресурс."""
+type ProfileLink {
+  id: ID!
+
+  """Подпись ссылки: GitHub, Портфолио и т. д."""
+  label: String!
+  url: String!
+}
+
+"""Проект из портфолио."""
+type Project {
+  description: String
+  id: ID!
+
+  """Ссылка на развёрнутый проект."""
+  liveUrl: String
+  name: String!
+
+  """Ссылка на репозиторий с кодом."""
+  repoUrl: String
+}
+
+type Query {
+  """Профиль специалиста со всеми связанными данными."""
+  profile: Profile!
+}
+
+"""Навык из профиля."""
+type Skill {
+  category: SkillCategory!
+  id: ID!
+
+  """Название навыка."""
+  name: String!
+}
+
+"""Группа, к которой относится навык."""
+enum SkillCategory {
+  AI
+  BACKEND
+  FRONTEND
+  TOOLS
+}
