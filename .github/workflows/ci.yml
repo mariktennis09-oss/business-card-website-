@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Клиент нужен до всех проверок: без него не соберутся типы Prisma.
+      - run: npx prisma generate --schema prisma/schema.prisma
+
+      # Валидация схемы идёт до тестов, чтобы рассинхрон схемы и миграций
+      # не выглядел как падение теста.
+      - run: npx prisma validate --schema prisma/schema.prisma
+
+      - run: npm run lint
+
+      - run: npm run typecheck
+
+      # Закоммиченный schema.gql не должен молча устаревать: контракт
+      # печатается из метаданных резолверов и сравнивается с файлом.
+      - run: npm run schema:check
+
+      - run: npm test
+
+      - run: npm run build
