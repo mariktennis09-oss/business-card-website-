@@ -14,6 +14,14 @@ import { HealthModule } from './health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProfileModule } from './profile/profile.module';
 
+/**
+ * @apollo/server публикует и CJS-, и ESM-декларации одних и тех же типов.
+ * Подпуть плагина и корневой пакет могут разрешиться в разные из них — и тогда
+ * структурно идентичный плагин выглядит несовместимым сам с собой. Приведение
+ * к типу, который ждёт драйвер, снимает этот ложный конфликт в одной точке.
+ */
+type ApolloPlugin = NonNullable<ApolloDriverConfig['plugins']>[number];
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, cache: true, validate: validateEnv }),
@@ -42,7 +50,7 @@ import { ProfileModule } from './profile/profile.module';
           // было исследовать по развёрнутой ссылке. API read-only, секретов нет.
           playground: false,
           introspection: true,
-          plugins: [ApolloServerPluginLandingPageLocalDefault({ embed: true })],
+          plugins: [ApolloServerPluginLandingPageLocalDefault({ embed: true }) as ApolloPlugin],
 
           context: (): GqlContext => ({
             loaders: {

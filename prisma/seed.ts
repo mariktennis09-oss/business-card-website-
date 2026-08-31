@@ -1,3 +1,6 @@
+// Локально строка подключения берётся из .env; в Docker и на Vercel переменные
+// приходят из окружения, и dotenv просто ничего не находит.
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { seedData } from './seed-data';
 

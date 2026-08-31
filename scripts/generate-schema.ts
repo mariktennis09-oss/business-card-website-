@@ -16,6 +16,19 @@ import { ProfileResolver } from '../src/profile/profile.resolver';
  */
 const SCHEMA_PATH = join(process.cwd(), 'schema.gql');
 
+/**
+ * Тот же заголовок, что дописывает GraphQLModule, когда пишет schema.gql на
+ * запуске в dev-режиме. Оба генератора обязаны давать байт в байт одинаковый
+ * файл, иначе schema:check начнёт ругаться после обычного npm run start:dev.
+ */
+const HEADER = [
+  '# ------------------------------------------------------',
+  '# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)',
+  '# ------------------------------------------------------',
+  '',
+  '',
+].join('\n');
+
 async function main(): Promise<void> {
   const app = await NestFactory.create(GraphQLSchemaBuilderModule, { logger: false });
   await app.init();
@@ -26,7 +39,7 @@ async function main(): Promise<void> {
 
     // lexicographicSortSchema повторяет sortSchema: true из GraphQLModule,
     // иначе порядок типов в файле зависел бы от порядка импортов.
-    const printed = printSchema(lexicographicSortSchema(schema));
+    const printed = HEADER + printSchema(lexicographicSortSchema(schema));
 
     if (process.argv.includes('--check')) {
       check(printed);
