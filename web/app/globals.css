@@ -1,19 +1,20 @@
 @import 'tailwindcss';
 
 /*
- * Монохром и никаких внешних шрифтов: страница собирается герметично,
- * без похода в Google Fonts на сборке и без скачка вёрстки при загрузке.
+ * Направление «Чертёж»: бумага, тушь, синяя линия.
+ * Значения повторяют PALETTE из lib/animation-constants.ts — там же они
+ * попадают в шейдеры, поэтому цвет частиц и цвет текста задаются один раз.
  */
 @theme {
-  --color-ink: #ededed;
-  --color-ink-dim: #8a8a8a;
-  --color-ink-faint: #5a5a5a;
-  --color-ground: #0c0c0c;
-  --color-line: #262626;
+  --color-paper: #f2f0ea;
+  --color-ink: #0b1a2b;
+  --color-blueprint: #1d6fa8;
+  --color-mark: #c64a2b;
+  --color-graphite: #8a8f98;
+  --color-line: #d9d5ca;
 
-  --font-sans:
-    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 html,
@@ -22,41 +23,33 @@ body {
 }
 
 body {
-  background: var(--color-ground);
+  background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
-  /* Слайды перелистываются, а не прокручиваются: страница не скроллится. */
+  /* Разделы перелистываются, а не прокручиваются: страница не скроллится. */
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Метки, номера и подписи — моноширинным, как в референсе. */
+/* Лейблы, номера и подписи — моноширинным, как аннотации на чертеже. */
 .label {
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--color-ink-dim);
+  color: var(--color-graphite);
 }
 
-/* Тонкая полоса «шума» поверх фона — отсылка к static в названии стиля. */
-.static-grain::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.035;
-  background-image: repeating-linear-gradient(
-    0deg,
-    #fff 0px,
-    #fff 1px,
-    transparent 1px,
-    transparent 3px
-  );
+/* Фокус виден всегда: навигация должна работать с клавиатуры. */
+:focus-visible {
+  outline: 2px solid var(--color-blueprint);
+  outline-offset: 3px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
   }
