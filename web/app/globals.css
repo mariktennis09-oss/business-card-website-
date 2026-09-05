@@ -40,6 +40,31 @@ body {
   color: var(--color-graphite);
 }
 
+/*
+ * Координатная сетка чертежа. Лежит поверх canvas и под контентом, кликов
+ * не ловит. Рисуется градиентами, а не картинкой: масштабируется без потерь
+ * и ничего не догружает.
+ */
+.blueprint-grid::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -5;
+  pointer-events: none;
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--color-blueprint) 8%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--color-blueprint) 8%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 48px 48px;
+}
+
 /* Нативный курсор прячется только когда собственный реально смонтирован. */
 .cursor-hidden,
 .cursor-hidden * {
