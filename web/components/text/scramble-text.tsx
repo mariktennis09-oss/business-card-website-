@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { SCRAMBLE } from '@/lib/animation-constants';
+import { useReducedMotion } from '@/lib/use-reduced-motion';
 
 /**
  * Дешифровка: символы прокручиваются через случайный набор и «схлопываются»
@@ -15,8 +16,16 @@ import { SCRAMBLE } from '@/lib/animation-constants';
  */
 export function ScrambleText({ text, className }: { text: string; className?: string }) {
   const [display, setDisplay] = useState(text);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
+    // При «меньше движения» текст появляется сразу: дешифровка здесь
+    // декоративна, и её отсутствие ничего не отнимает у содержания.
+    if (reducedMotion) {
+      setDisplay(text);
+      return;
+    }
+
     const steps = Math.ceil(SCRAMBLE.durationMs / SCRAMBLE.stepMs);
     let step = 0;
 
@@ -46,7 +55,7 @@ export function ScrambleText({ text, className }: { text: string; className?: st
     }, SCRAMBLE.stepMs);
 
     return () => clearInterval(timer);
-  }, [text]);
+  }, [text, reducedMotion]);
 
   return (
     <span className={className}>

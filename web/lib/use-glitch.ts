@@ -23,20 +23,31 @@ function randomBetween(min: number, max: number): number {
  * В простое всплески идут редко и с разной паузой — регулярность выдала бы
  * таймер и перестала бы читаться как сбой.
  */
-export function useGlitch(): GlitchDriver {
+export function useGlitch(enabled = true): GlitchDriver {
   const intensity = useRef({ value: 0 });
 
-  const burst = useCallback((peak: number, duration: number) => {
-    const target = intensity.current;
-    gsap.killTweensOf(target);
+  const burst = useCallback(
+    (peak: number, duration: number) => {
+      if (!enabled) {
+        return;
+      }
 
-    gsap
-      .timeline()
-      .to(target, { value: peak, duration: duration * 0.25, ease: 'power2.out' })
-      .to(target, { value: 0, duration: duration * 0.75, ease: 'power2.in' });
-  }, []);
+      const target = intensity.current;
+      gsap.killTweensOf(target);
+
+      gsap
+        .timeline()
+        .to(target, { value: peak, duration: duration * 0.25, ease: 'power2.out' })
+        .to(target, { value: 0, duration: duration * 0.75, ease: 'power2.in' });
+    },
+    [enabled],
+  );
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
     // Объект интенсивности не меняется за жизнь хука, но захватить его
     // в переменную всё равно правильно: чистка обязана гасить твины именно
     // того объекта, который анимировала.
@@ -59,7 +70,7 @@ export function useGlitch(): GlitchDriver {
       pending?.kill();
       gsap.killTweensOf(target);
     };
-  }, [burst]);
+  }, [burst, enabled]);
 
   return { intensity, burst };
 }

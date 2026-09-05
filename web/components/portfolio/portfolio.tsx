@@ -1,14 +1,16 @@
 'use client';
 
 import gsap from 'gsap';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import type { Profile } from '@/lib/api';
-import { GLITCH, TRANSITION } from '@/lib/animation-constants';
+import { GLITCH, PERFORMANCE, REDUCED_MOTION, TRANSITION } from '@/lib/animation-constants';
+import { detectTier, textureSizeForTier, type DeviceTier } from '@/lib/device';
 import { DEFAULT_SECTION, SECTIONS, sectionIndex, type SectionId } from '@/lib/sections';
-import { usePointerNdc } from '@/lib/use-pointer-ndc';
 import { useGlitch } from '@/lib/use-glitch';
 import { useHashSection } from '@/lib/use-hash-section';
+import { usePointerNdc } from '@/lib/use-pointer-ndc';
+import { useReducedMotion } from '@/lib/use-reduced-motion';
 import { CustomCursor } from '../cursor/custom-cursor';
 import { ParticleCanvas } from '../particles/particle-canvas';
 import { AboutSection } from './sections/about-section';
@@ -27,9 +29,10 @@ export function Portfolio({ profile }: { profile: Profile }) {
   const { section: target, settled } = useHashSection();
   const [displayed, setDisplayed] = useState<SectionId>(DEFAULT_SECTION);
 
+  const reducedMotion = useReducedMotion();
   const content = useRef<HTMLDivElement>(null);
   const pointer = usePointerNdc();
-  const { intensity: glitch, burst } = useGlitch();
+  const { intensity: glitch, burst } = useGlitch(!reducedMotion);
 
   /**
    * «Энергия» перехода: 0 в покое, 1 на пике. Живёт в ref, потому что её
@@ -37,6 +40,37 @@ export function Portfolio({ profile }: { profile: Profile }) {
    * перерисовывать дерево на каждом кадре анимации.
    */
   const energy = useRef({ value: 0 });
+
+  // Класс устройства определяется после монтирования: navigator и media-запросы
+  // на сервере недоступны, а сцена всё равно клиентская.
+  const [tier, setTier] = useState<DeviceTier | null>(null);
+  useEffect(() => setTier(detectTier()), []);
+
+  /**
+   * Авто-снижение качества по измеренному кадру. Догадка по числу ядер
+   * ошибается в обе стороны, а этот замер — нет: если сцена стабильно не
+   * укладывается, частиц становится вчетверо меньше. Пересоздание симуляции
+   * стоит одного кадра и случается не более одного раза за сессию.
+   */
+  const slowReports = useRef(0);
+  const onStats = useCallback(
+    ({ fps }: { fps: number }) => {
+      if (tier !== 'high') {
+        return;
+      }
+
+      if (fps >= PERFORMANCE.minFps) {
+        slowReports.current = 0;
+        return;
+      }
+
+      slowReports.current += 1;
+      if (slowReports.current >= PERFORMANCE.slowReportsBeforeDowngrade) {
+        setTier('low');
+      }
+    },
+    [tier],
+  );
 
   useEffect(() => {
     if (!settled || target === displayed) {
@@ -50,6 +84,18 @@ export function Portfolio({ profile }: { profile: Profile }) {
     }
 
     const timeline = gsap.timeline();
+
+    if (reducedMotion) {
+      // Никакой оркестровки: смена содержимого и всё.
+      timeline
+        .to(element, { opacity: 0, duration: REDUCED_MOTION.fade })
+        .add(() => flushSync(() => setDisplayed(target)))
+        .to(element, { opacity: 1, duration: REDUCED_MOTION.fade });
+
+      return () => {
+        timeline.kill();
+      };
+    }
 
     timeline
       // 1. Уход текущего контента.
@@ -85,20 +131,25 @@ export function Portfolio({ profile }: { profile: Profile }) {
     return () => {
       timeline.kill();
     };
-  }, [target, displayed, settled, burst]);
+  }, [target, displayed, settled, burst, reducedMotion]);
 
   return (
     <div className="blueprint-grid relative flex h-dvh flex-col">
       <CustomCursor />
 
       {/* Canvas — фон и только фон: весь текст живёт в DOM и читается без WebGL. */}
-      <ParticleCanvas
-        className="fixed inset-0 -z-10"
-        textureSize={512}
-        pointer={pointer}
-        energy={energy}
-        glitch={glitch}
-      />
+      {tier ? (
+        <ParticleCanvas
+          key={tier}
+          className="fixed inset-0 -z-10"
+          textureSize={textureSizeForTier(tier)}
+          pointer={pointer}
+          energy={energy}
+          glitch={glitch}
+          reducedMotion={reducedMotion}
+          onStats={onStats}
+        />
+      ) : null}
 
       <header className="flex shrink-0 flex-wrap items-baseline justify-between gap-x-8 gap-y-2 px-5 py-5 sm:px-8">
         <a href="#/" className="label !text-ink transition-colors hover:!text-blueprint">
