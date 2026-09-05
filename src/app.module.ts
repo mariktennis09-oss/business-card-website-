@@ -7,6 +7,7 @@ import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin
 import { join } from 'node:path';
 import { GqlContext } from './common/graphql-context';
 import { PrismaExceptionFilter } from './common/prisma-exception.filter';
+import { SANDBOX_DOCUMENT } from './common/sandbox.document';
 import { Env, validateEnv } from './config/env.schema';
 import { AchievementLoaderFactory } from './experience/achievement.loader';
 import { ExperienceModule } from './experience/experience.module';
@@ -50,7 +51,14 @@ type ApolloPlugin = NonNullable<ApolloDriverConfig['plugins']>[number];
           // было исследовать по развёрнутой ссылке. API read-only, секретов нет.
           playground: false,
           introspection: true,
-          plugins: [ApolloServerPluginLandingPageLocalDefault({ embed: true }) as ApolloPlugin],
+          plugins: [
+            ApolloServerPluginLandingPageLocalDefault({
+              embed: true,
+              // Редактор открывается с запросом из ТЗ, а не с заглушкой Apollo:
+              // проверяющему остаётся нажать «выполнить».
+              document: SANDBOX_DOCUMENT,
+            }) as ApolloPlugin,
+          ],
 
           context: (): GqlContext => ({
             loaders: {
