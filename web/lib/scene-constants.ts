@@ -37,10 +37,26 @@ export const SURFACE = {
  */
 export const GRAIN = {
   /** Заметность. Зерно должно читаться, иначе заливка выглядит пластиковой. */
-  opacity: 0.42,
-  /** Частота шума: больше — мельче зерно. */
-  baseFrequency: 0.9,
+  opacity: 0.6,
+  /** Размер песчинок: больше значение — мельче зерно. */
+  baseFrequency: 0.55,
+  /** Слоёв шума друг поверх друга: больше — богаче структура. */
   octaves: 3,
+} as const;
+
+/** Наборы для стенда: перебирать значения глазами быстрее, чем описывать словами. */
+export const GRAIN_PRESETS = {
+  size: [
+    { label: 'крупное', baseFrequency: 0.35 },
+    { label: 'среднее', baseFrequency: 0.55 },
+    { label: 'мелкое', baseFrequency: 0.9 },
+  ],
+  strength: [
+    { label: 'слабое', opacity: 0.3 },
+    { label: 'среднее', opacity: 0.45 },
+    { label: 'сильное', opacity: 0.6 },
+    { label: 'очень сильное', opacity: 0.8 },
+  ],
 } as const;
 
 /** Интерполяция цвета фона при смене секции. */
