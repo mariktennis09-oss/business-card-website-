@@ -21,7 +21,7 @@ import {
 } from 'three';
 import type { PointerNdc } from '@/lib/use-pointer-ndc';
 import { GPUComputationRenderer } from 'three/examples/jsm/misc/GPUComputationRenderer.js';
-import { CURSOR, PALETTE, PARTICLES, TRANSITION } from '@/lib/animation-constants';
+import { CURSOR, PALETTE, PARTICLES, TRANSITION } from '@/lib/lab-constants';
 import curlNoiseSource from '@/shaders/lib/curl-noise.glsl';
 import simplexNoiseSource from '@/shaders/lib/simplex-noise-3d.glsl';
 import particlesFragment from '@/shaders/particles.frag.glsl';

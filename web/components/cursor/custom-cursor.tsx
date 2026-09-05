@@ -2,7 +2,7 @@
 
 import gsap from 'gsap';
 import { useEffect, useRef, useState } from 'react';
-import { CURSOR_VISUAL } from '@/lib/animation-constants';
+import { CURSOR_VISUAL } from '@/lib/lab-constants';
 
 /** Что считается интерактивным: над этим кольцо растёт и инвертирует фон. */
 const INTERACTIVE_SELECTOR = 'a, button, [data-cursor="interactive"]';

@@ -4,7 +4,7 @@ import gsap from 'gsap';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import type { Profile } from '@/lib/api';
-import { GLITCH, PERFORMANCE, REDUCED_MOTION, TRANSITION } from '@/lib/animation-constants';
+import { GLITCH, PERFORMANCE, REDUCED_MOTION, TRANSITION } from '@/lib/lab-constants';
 import { detectTier, textureSizeForTier, type DeviceTier } from '@/lib/device';
 import { DEFAULT_SECTION, SECTIONS, sectionIndex, type SectionId } from '@/lib/sections';
 import { useGlitch } from '@/lib/use-glitch';

@@ -10,7 +10,7 @@ import {
   ShaderMaterial,
   WebGLRenderTarget,
 } from 'three';
-import { GLITCH } from '@/lib/animation-constants';
+import { GLITCH } from '@/lib/lab-constants';
 import fullscreenVertex from '@/shaders/fullscreen.vert.glsl';
 import glitchFragment from '@/shaders/glitch.frag.glsl';
 

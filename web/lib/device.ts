@@ -1,4 +1,4 @@
-import { PARTICLES } from './animation-constants';
+import { PARTICLES } from './lab-constants';
 
 export type DeviceTier = 'high' | 'low';
 

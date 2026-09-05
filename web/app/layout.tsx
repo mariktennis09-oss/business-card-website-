@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Archivo, IBM_Plex_Mono } from 'next/font/google';
 import type { ReactNode } from 'react';
-import { PALETTE } from '@/lib/animation-constants';
+import { PALETTE } from '@/lib/lab-constants';
 import './globals.css';
 
 /**

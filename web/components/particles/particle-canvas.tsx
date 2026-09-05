@@ -2,7 +2,7 @@
 
 import { Canvas } from '@react-three/fiber';
 import { useEffect, useRef, useState, type RefObject } from 'react';
-import { CAMERA, PALETTE } from '@/lib/animation-constants';
+import { CAMERA, PALETTE } from '@/lib/lab-constants';
 import { supportsWebGl2 } from '@/lib/device';
 import { GlitchPass } from '../effects/glitch-pass';
 import { ParticleField, type ParticleFieldProps } from './particle-field';

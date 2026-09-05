@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { SCRAMBLE } from '@/lib/animation-constants';
+import { SCRAMBLE } from '@/lib/lab-constants';
 import { useReducedMotion } from '@/lib/use-reduced-motion';
 
 /**

@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react';
 import { CustomCursor } from '@/components/cursor/custom-cursor';
 import { ParticleCanvas } from '@/components/particles/particle-canvas';
-import { CURSOR, PARTICLES } from '@/lib/animation-constants';
+import { CURSOR, PARTICLES } from '@/lib/lab-constants';
 import { usePointerNdc } from '@/lib/use-pointer-ndc';
 
 /**

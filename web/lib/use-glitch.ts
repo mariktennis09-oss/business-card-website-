@@ -2,7 +2,7 @@
 
 import gsap from 'gsap';
 import { useCallback, useEffect, useRef } from 'react';
-import { GLITCH } from './animation-constants';
+import { GLITCH } from './lab-constants';
 
 export interface GlitchDriver {
   /** Интенсивность 0…1. Читается кадровым циклом сцены. */

@@ -83,6 +83,17 @@ body {
   outline-offset: 3px;
 }
 
+/*
+ * Плёночное зерно. feTurbulence в data-URI: бинарного файла нет, загружать
+ * нечего, и текстура не зависит от цвета под ней. mix-blend-mode оставляет
+ * зерно текстурой, а не серой плёнкой поверх заливки.
+ */
+.grain {
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
