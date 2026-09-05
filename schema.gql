@@ -9,7 +9,7 @@ type Achievement {
 }
 
 """
-A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+Дата и время в формате ISO 8601, UTC. Например: 2025-03-01T00:00:00.000Z
 """
 scalar DateTime
 

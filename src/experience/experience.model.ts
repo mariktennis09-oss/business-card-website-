@@ -1,4 +1,5 @@
-import { Field, GraphQLISODateTime, ID, ObjectType } from '@nestjs/graphql';
+import { Field, ID, ObjectType } from '@nestjs/graphql';
+import { DateTimeScalar } from '../common/date-time.scalar';
 
 @ObjectType('Achievement', { description: 'Конкретный результат, достигнутый на месте работы.' })
 export class AchievementModel {
@@ -25,10 +26,10 @@ export class ExperienceModel {
   @Field()
   position!: string;
 
-  @Field(() => GraphQLISODateTime, { description: 'Начало работы, точность — до месяца.' })
+  @Field(() => DateTimeScalar, { description: 'Начало работы, точность — до месяца.' })
   startDate!: Date;
 
-  @Field(() => GraphQLISODateTime, {
+  @Field(() => DateTimeScalar, {
     nullable: true,
     description: 'Окончание работы; null — работа продолжается.',
   })
