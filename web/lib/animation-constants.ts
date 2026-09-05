@@ -108,6 +108,39 @@ export const TRANSITION = {
   curlSpike: 0.6,
 } as const;
 
+/**
+ * Глитч. Непрерывным не бывает: у него три повода — смена раздела,
+ * наведение на пункт меню и редкий всплеск в простое.
+ */
+export const GLITCH = {
+  /** Пик интенсивности по поводам. */
+  transitionPeak: 0.9,
+  hoverPeak: 0.35,
+  idlePeak: 0.55,
+
+  /** Длительности всплесков в секундах. */
+  transitionDuration: 0.24,
+  hoverDuration: 0.16,
+  idleDurationMin: 0.08,
+  idleDurationMax: 0.2,
+
+  /** Пауза между всплесками в простое, секунды. */
+  idleIntervalMin: 8,
+  idleIntervalMax: 15,
+
+  /** Геометрия искажения в долях экрана. */
+  rgbSplit: 0.006,
+  blockShift: 0.055,
+  blockHeight: 0.06,
+} as const;
+
+/** Дешифровка текста. */
+export const SCRAMBLE = {
+  durationMs: 600,
+  stepMs: 30,
+  glyphs: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/\\<>*#+=-',
+} as const;
+
 /** Камера сцены. */
 export const CAMERA = {
   position: [0, 0, 2.6] as const,

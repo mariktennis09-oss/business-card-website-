@@ -4,9 +4,10 @@ import gsap from 'gsap';
 import { useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import type { Profile } from '@/lib/api';
-import { TRANSITION } from '@/lib/animation-constants';
+import { GLITCH, TRANSITION } from '@/lib/animation-constants';
 import { DEFAULT_SECTION, SECTIONS, sectionIndex, type SectionId } from '@/lib/sections';
 import { usePointerNdc } from '@/lib/use-pointer-ndc';
+import { useGlitch } from '@/lib/use-glitch';
 import { useHashSection } from '@/lib/use-hash-section';
 import { CustomCursor } from '../cursor/custom-cursor';
 import { ParticleCanvas } from '../particles/particle-canvas';
@@ -28,6 +29,7 @@ export function Portfolio({ profile }: { profile: Profile }) {
 
   const content = useRef<HTMLDivElement>(null);
   const pointer = usePointerNdc();
+  const { intensity: glitch, burst } = useGlitch();
 
   /**
    * «Энергия» перехода: 0 в покое, 1 на пике. Живёт в ref, потому что её
@@ -57,8 +59,12 @@ export function Portfolio({ profile }: { profile: Profile }) {
         duration: TRANSITION.exit,
         ease: 'power2.in',
       })
-      // 2. Всплеск в поле частиц — начинается на уходе, а не после него,
-      //    иначе переход распадается на два отдельных события.
+      // 2. Всплеск глитча и реакция поля — начинаются на уходе, а не после
+      //    него, иначе переход распадается на два отдельных события.
+      .add(
+        () => burst(GLITCH.transitionPeak, GLITCH.transitionDuration),
+        `-=${TRANSITION.exit * 0.5}`,
+      )
       .to(
         energy.current,
         { value: 1, duration: TRANSITION.energyRise, ease: 'power2.out' },
@@ -79,7 +85,7 @@ export function Portfolio({ profile }: { profile: Profile }) {
     return () => {
       timeline.kill();
     };
-  }, [target, displayed, settled]);
+  }, [target, displayed, settled, burst]);
 
   return (
     <div className="blueprint-grid relative flex h-dvh flex-col">
@@ -91,6 +97,7 @@ export function Portfolio({ profile }: { profile: Profile }) {
         textureSize={512}
         pointer={pointer}
         energy={energy}
+        glitch={glitch}
       />
 
       <header className="flex shrink-0 flex-wrap items-baseline justify-between gap-x-8 gap-y-2 px-5 py-5 sm:px-8">
@@ -105,6 +112,7 @@ export function Portfolio({ profile }: { profile: Profile }) {
               key={section.id}
               href={section.hash}
               aria-current={section.id === target ? 'page' : undefined}
+              onMouseEnter={() => burst(GLITCH.hoverPeak, GLITCH.hoverDuration)}
               className={`label transition-colors hover:!text-blueprint ${
                 section.id === target ? '!text-ink' : ''
               }`}

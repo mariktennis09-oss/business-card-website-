@@ -1,19 +1,22 @@
 'use client';
 
 import { Canvas } from '@react-three/fiber';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import { CAMERA, PALETTE } from '@/lib/animation-constants';
+import { GlitchPass } from '../effects/glitch-pass';
 import { ParticleField, type ParticleFieldProps } from './particle-field';
 
 type ParticleCanvasProps = ParticleFieldProps & {
   className?: string;
+  /** Интенсивность глитча. Без неё проход не подключается вовсе. */
+  glitch?: RefObject<{ value: number }>;
 };
 
 /**
  * Обёртка сцены. Отвечает за то, когда цикл вообще крутится: считать поле
  * в скрытой вкладке или за пределами экрана — значит греть видеокарту впустую.
  */
-export function ParticleCanvas({ className, ...fieldProps }: ParticleCanvasProps) {
+export function ParticleCanvas({ className, glitch, ...fieldProps }: ParticleCanvasProps) {
   const container = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(true);
   const [onScreen, setOnScreen] = useState(true);
@@ -55,6 +58,7 @@ export function ParticleCanvas({ className, ...fieldProps }: ParticleCanvasProps
         onCreated={({ gl }) => gl.setClearColor(PALETTE.paper)}
       >
         <ParticleField {...fieldProps} />
+        {glitch ? <GlitchPass intensity={glitch} /> : null}
       </Canvas>
     </div>
   );

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { ScrambleText } from '../text/scramble-text';
 
 /**
  * Рамка с врезанной подписью и засечками по углам — основной приём подачи
@@ -21,7 +22,7 @@ export function BlueprintFrame({
   return (
     <div className={className}>
       <div className="relative border border-line">
-        <span className="label absolute -top-[9px] left-5 bg-paper px-2">{label}</span>
+        <ScrambleText text={label} className="label absolute -top-[9px] left-5 bg-paper px-2" />
 
         <CornerTick className="-top-px -left-px border-t border-l" />
         <CornerTick className="-top-px -right-px border-t border-r" />
