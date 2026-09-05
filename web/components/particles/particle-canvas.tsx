@@ -31,10 +31,9 @@ export function ParticleCanvas({ className, ...fieldProps }: ParticleCanvasProps
       return;
     }
 
-    const observer = new IntersectionObserver(
-      ([entry]) => setOnScreen(entry.isIntersecting),
-      { threshold: 0 },
-    );
+    const observer = new IntersectionObserver(([entry]) => setOnScreen(entry.isIntersecting), {
+      threshold: 0,
+    });
 
     observer.observe(element);
     return () => observer.disconnect();

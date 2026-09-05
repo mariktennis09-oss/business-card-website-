@@ -1,8 +1,10 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import { CustomCursor } from '@/components/cursor/custom-cursor';
 import { ParticleCanvas } from '@/components/particles/particle-canvas';
-import { PARTICLES } from '@/lib/animation-constants';
+import { CURSOR, PARTICLES } from '@/lib/animation-constants';
+import { usePointerNdc } from '@/lib/use-pointer-ndc';
 
 /**
  * Изолированный стенд для поля частиц: ничего, кроме canvas и приборов.
@@ -11,16 +13,22 @@ import { PARTICLES } from '@/lib/animation-constants';
  */
 export default function ParticlesLabPage() {
   const [textureSize, setTextureSize] = useState<number>(PARTICLES.textureSize.high);
+  const [repulsion, setRepulsion] = useState(true);
   const [fps, setFps] = useState<number | null>(null);
 
+  const pointer = usePointerNdc();
   const onStats = useCallback((stats: { fps: number }) => setFps(stats.fps), []);
 
   return (
     <main className="relative h-dvh w-full">
+      <CustomCursor />
+
       <ParticleCanvas
         key={textureSize}
         className="absolute inset-0"
         textureSize={textureSize}
+        pointer={pointer}
+        cursorStrength={repulsion ? CURSOR.strength : 0}
         onStats={onStats}
       />
 
@@ -47,6 +55,16 @@ export default function ParticlesLabPage() {
               {tier}
             </button>
           ))}
+
+          <button
+            type="button"
+            onClick={() => setRepulsion((value) => !value)}
+            className={`label border px-3 py-1 transition-colors ${
+              repulsion ? 'border-ink !text-ink' : 'border-line hover:border-ink hover:!text-ink'
+            }`}
+          >
+            cursor {repulsion ? 'on' : 'off'}
+          </button>
         </div>
       </div>
     </main>

@@ -14,10 +14,7 @@ export function Deck({ sections, children }: { sections: string[]; children: Rea
   const total = slides.length;
   const [current, setCurrent] = useState(0);
 
-  const go = useCallback(
-    (next: number) => setCurrent(((next % total) + total) % total),
-    [total],
-  );
+  const go = useCallback((next: number) => setCurrent(((next % total) + total) % total), [total]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {

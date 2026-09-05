@@ -40,6 +40,18 @@ body {
   color: var(--color-graphite);
 }
 
+/* Нативный курсор прячется только когда собственный реально смонтирован. */
+.cursor-hidden,
+.cursor-hidden * {
+  cursor: none;
+}
+
+/* Над интерактивным элементом кольцо инвертирует то, что под ним. */
+.cursor-ring--active {
+  mix-blend-mode: difference;
+  border-color: var(--color-paper);
+}
+
 /* Фокус виден всегда: навигация должна работать с клавиатуры. */
 :focus-visible {
   outline: 2px solid var(--color-blueprint);

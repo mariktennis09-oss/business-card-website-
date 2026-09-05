@@ -1,7 +1,7 @@
 'use client';
 
 import { useFrame, useThree } from '@react-three/fiber';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import {
   BufferAttribute,
   BufferGeometry,
@@ -15,8 +15,11 @@ import {
   RGBAFormat,
   ShaderMaterial,
   Vector3,
+  type Camera,
+  type PerspectiveCamera,
   type WebGLRenderer,
 } from 'three';
+import type { PointerNdc } from '@/lib/use-pointer-ndc';
 import { GPUComputationRenderer } from 'three/examples/jsm/misc/GPUComputationRenderer.js';
 import { CURSOR, PALETTE, PARTICLES } from '@/lib/animation-constants';
 import curlNoiseSource from '@/shaders/lib/curl-noise.glsl';
@@ -36,8 +39,8 @@ const STATS_INTERVAL_SECONDS = 0.5;
 export interface ParticleFieldProps {
   /** Сторона симуляционной текстуры: частиц будет textureSize². */
   textureSize: number;
-  /** Позиция курсора в мировых координатах. Подключается на следующем шаге. */
-  cursor?: { x: number; y: number };
+  /** Курсор в NDC. Читается в цикле кадра, перерисовок React не вызывает. */
+  pointer?: RefObject<PointerNdc>;
   /** Сила отталкивания; 0 — курсор поле не трогает. */
   cursorStrength?: number;
   /** Вызывается примерно дважды в секунду с замером кадра. */
@@ -46,14 +49,17 @@ export interface ParticleFieldProps {
 
 export function ParticleField({
   textureSize,
-  cursor,
+  pointer,
   cursorStrength = CURSOR.strength,
   onStats,
 }: ParticleFieldProps) {
   const renderer = useThree((state) => state.gl);
   const pixelRatio = useThree((state) => state.viewport.dpr);
 
-  const simulation = useMemo(() => createSimulation(renderer, textureSize), [renderer, textureSize]);
+  const simulation = useMemo(
+    () => createSimulation(renderer, textureSize),
+    [renderer, textureSize],
+  );
 
   useEffect(() => () => simulation.dispose(), [simulation]);
 
@@ -63,6 +69,7 @@ export function ParticleField({
 
   const frames = useRef(0);
   const elapsedSinceReport = useRef(0);
+  const smoothedCursor = useRef({ x: CURSOR.parkedDistance, y: CURSOR.parkedDistance });
 
   useFrame((state, delta) => {
     // Симуляция и рендер идут одним циклом react-three-fiber: своего
@@ -72,11 +79,25 @@ export function ParticleField({
 
     simulationUniforms.uTime.value = state.clock.elapsedTime;
     simulationUniforms.uDelta.value = step;
-    simulationUniforms.uCursorStrength.value = cursorStrength;
 
-    if (cursor) {
-      simulationUniforms.uCursor.value.set(cursor.x, cursor.y, 0);
+    const pointerState = pointer?.current;
+    const pointerActive = pointerState?.active === true;
+
+    if (pointerState) {
+      const target = pointerActive
+        ? ndcToWorldPlane(pointerState, state.camera, state.size.width / state.size.height)
+        : { x: CURSOR.parkedDistance, y: CURSOR.parkedDistance };
+
+      // Кадронезависимое сглаживание: на 30 fps курсор догоняет за то же
+      // время, что и на 144, — иначе инерция зависела бы от железа.
+      const factor = 1 - Math.pow(1 - CURSOR.lerp, delta * 60);
+      smoothedCursor.current.x += (target.x - smoothedCursor.current.x) * factor;
+      smoothedCursor.current.y += (target.y - smoothedCursor.current.y) * factor;
+
+      simulationUniforms.uCursor.value.set(smoothedCursor.current.x, smoothedCursor.current.y, 0);
     }
+
+    simulationUniforms.uCursorStrength.value = pointerActive ? cursorStrength : 0;
 
     gpu.compute();
     pointsUniforms.uPositions.value = gpu.getCurrentRenderTarget(positionVariable).texture;
@@ -96,6 +117,22 @@ export function ParticleField({
   });
 
   return <primitive object={simulation.points} />;
+}
+
+/**
+ * NDC → мировые координаты на плоскости z = 0, где живут частицы.
+ * Проецировать через raycaster избыточно: плоскость одна и перпендикулярна
+ * взгляду, так что достаточно половины высоты кадра на расстоянии камеры.
+ */
+function ndcToWorldPlane(
+  pointer: PointerNdc,
+  camera: Camera,
+  aspect: number,
+): { x: number; y: number } {
+  const perspective = camera as PerspectiveCamera;
+  const halfHeight = Math.tan((perspective.fov * Math.PI) / 360) * perspective.position.z;
+
+  return { x: pointer.x * halfHeight * aspect, y: pointer.y * halfHeight };
 }
 
 function createSimulation(renderer: WebGLRenderer, size: number) {
