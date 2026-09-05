@@ -1,0 +1,63 @@
+@import 'tailwindcss';
+
+/*
+ * Монохром и никаких внешних шрифтов: страница собирается герметично,
+ * без похода в Google Fonts на сборке и без скачка вёрстки при загрузке.
+ */
+@theme {
+  --color-ink: #ededed;
+  --color-ink-dim: #8a8a8a;
+  --color-ink-faint: #5a5a5a;
+  --color-ground: #0c0c0c;
+  --color-line: #262626;
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  /* Слайды перелистываются, а не прокручиваются: страница не скроллится. */
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Метки, номера и подписи — моноширинным, как в референсе. */
+.label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-ink-dim);
+}
+
+/* Тонкая полоса «шума» поверх фона — отсылка к static в названии стиля. */
+.static-grain::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: repeating-linear-gradient(
+    0deg,
+    #fff 0px,
+    #fff 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

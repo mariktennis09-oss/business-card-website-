@@ -8,20 +8,27 @@ export interface WorkPeriod {
   endDate: Date | null;
 }
 
-const MONTHS_RU = [
-  'январь',
-  'февраль',
-  'март',
-  'апрель',
-  'май',
-  'июнь',
-  'июль',
-  'август',
-  'сентябрь',
-  'октябрь',
-  'ноябрь',
-  'декабрь',
+/**
+ * Названия месяцев зашиты списком, а не берутся из Intl: в минимальных
+ * образах Node может не оказаться нужных данных ICU, и строка периода тихо
+ * поменялась бы в проде. Язык совпадает с языком данных в сиде.
+ */
+const MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
+
+const PRESENT = 'Present';
 
 /** Место работы считается текущим ровно тогда, когда не проставлена дата окончания. */
 export function isCurrent(period: WorkPeriod): boolean {
@@ -52,12 +59,12 @@ export function formatPeriod(period: WorkPeriod): string {
   const from = formatMonth(period.startDate);
 
   if (period.endDate === null) {
-    return from + ' — настоящее время';
+    return from + ' — ' + PRESENT;
   }
 
   return from + ' — ' + formatMonth(period.endDate);
 }
 
 function formatMonth(date: Date): string {
-  return MONTHS_RU[date.getUTCMonth()] + ' ' + date.getUTCFullYear();
+  return MONTHS[date.getUTCMonth()] + ' ' + date.getUTCFullYear();
 }

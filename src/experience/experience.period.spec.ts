@@ -35,13 +35,11 @@ describe('experience.period', () => {
 
   describe('formatPeriod', () => {
     it('форматирует завершённый период границами', () => {
-      expect(formatPeriod({ startDate: march2025, endDate: may2025 })).toBe('март 2025 — май 2025');
+      expect(formatPeriod({ startDate: march2025, endDate: may2025 })).toBe('March 2025 — May 2025');
     });
 
     it('помечает текущее место работы вместо даты окончания', () => {
-      expect(formatPeriod({ startDate: march2025, endDate: null })).toBe(
-        'март 2025 — настоящее время',
-      );
+      expect(formatPeriod({ startDate: march2025, endDate: null })).toBe('March 2025 — Present');
     });
   });
 });
