@@ -21,7 +21,7 @@ import {
 } from 'three';
 import type { PointerNdc } from '@/lib/use-pointer-ndc';
 import { GPUComputationRenderer } from 'three/examples/jsm/misc/GPUComputationRenderer.js';
-import { CURSOR, PALETTE, PARTICLES } from '@/lib/animation-constants';
+import { CURSOR, PALETTE, PARTICLES, TRANSITION } from '@/lib/animation-constants';
 import curlNoiseSource from '@/shaders/lib/curl-noise.glsl';
 import simplexNoiseSource from '@/shaders/lib/simplex-noise-3d.glsl';
 import particlesFragment from '@/shaders/particles.frag.glsl';
@@ -43,6 +43,11 @@ export interface ParticleFieldProps {
   pointer?: RefObject<PointerNdc>;
   /** Сила отталкивания; 0 — курсор поле не трогает. */
   cursorStrength?: number;
+  /**
+   * «Энергия» перехода от 0 до 1. Читается в кадровом цикле, поэтому это ref,
+   * а не значение: смена раздела не должна перерисовывать сцену.
+   */
+  energy?: RefObject<{ value: number }>;
   /** Вызывается примерно дважды в секунду с замером кадра. */
   onStats?: (stats: { fps: number }) => void;
 }
@@ -51,6 +56,7 @@ export function ParticleField({
   textureSize,
   pointer,
   cursorStrength = CURSOR.strength,
+  energy,
   onStats,
 }: ParticleFieldProps) {
   const renderer = useThree((state) => state.gl);
@@ -98,6 +104,15 @@ export function ParticleField({
     }
 
     simulationUniforms.uCursorStrength.value = pointerActive ? cursorStrength : 0;
+
+    // Реакция поля на переход: частицы ускоряются и завихрения мельчают.
+    // Симуляция при этом не перезапускается — меняются только параметры,
+    // поэтому сцена остаётся непрерывной от раздела к разделу.
+    const transitionEnergy = energy?.current.value ?? 0;
+    simulationUniforms.uSpeed.value =
+      PARTICLES.speed * (1 + transitionEnergy * TRANSITION.turbulence);
+    simulationUniforms.uCurlScale.value =
+      PARTICLES.curlScale * (1 + transitionEnergy * TRANSITION.curlSpike);
 
     gpu.compute();
     pointsUniforms.uPositions.value = gpu.getCurrentRenderTarget(positionVariable).texture;
@@ -207,6 +222,8 @@ function createSimulation(renderer: WebGLRenderer, size: number) {
       uDelta: { value: number };
       uCursor: { value: Vector3 };
       uCursorStrength: { value: number };
+      uSpeed: { value: number };
+      uCurlScale: { value: number };
     },
     pointsUniforms,
     points,
