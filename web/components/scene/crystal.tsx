@@ -3,39 +3,33 @@
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import { Group, MeshPhysicalMaterial } from 'three';
-import { ENVIRONMENT, GEM, GEM_MATERIAL, OBJECT, SURFACE } from '@/lib/scene-constants';
+import { createCrystalGeometry } from '@/lib/crystal-geometry';
+import {
+  CRYSTAL,
+  CRYSTAL_TINTS,
+  DEFAULT_TINT,
+  ENVIRONMENT,
+  GLASS,
+  OBJECT,
+  type CrystalTintKey,
+} from '@/lib/scene-constants';
 import type { PointerNdc } from '@/lib/use-pointer-ndc';
 
 /**
- * Центральный объект — огранённый кристалл каплевидного профиля: острая
- * вершина, двухступенчатая корона, узкий поясок и длинный павильон вниз.
+ * Центральный объект — гранёный кристалл. Форма не смоделирована и не
+ * загружена файлом, а сгенерирована: см. `createCrystalGeometry`. Зерно
+ * задаёт конкретный экземпляр, всё остальное — материал и движение.
  *
- * Собран из примитивов, а не загружен моделью. Внешнего файла нет, значит
- * нечего грузить, нечего сжимать и нечем ошибиться на прелоаде; полигонов
- * при этом меньше сотни. Плоское затенение обязательно — со сглаженными
- * нормалями грани сливаются и огранка перестаёт читаться.
+ * Стекло, а не матовый камень: цвет приходит из затухания света внутри
+ * тела, рёбра раскладывают его по спектру. Плоское затенение обязательно —
+ * со сглаженными нормалями грани сливаются и огранка перестаёт читаться.
  */
-
-// Раскладка по вертикали. Считается из пропорций, а не вбита числами:
-// поменять в GEM одну высоту и вручную пересчитывать остальные — способ
-// однажды забыть.
-const HALF_GIRDLE = GEM.girdleHeight / 2;
-const CROWN_Y = HALF_GIRDLE + GEM.crownHeight / 2;
-const APEX_Y = HALF_GIRDLE + GEM.crownHeight + GEM.apexHeight / 2;
-const PAVILION_Y = -HALF_GIRDLE - GEM.pavilionHeight / 2;
-
-const TOP = HALF_GIRDLE + GEM.crownHeight + GEM.apexHeight;
-const BOTTOM = -HALF_GIRDLE - GEM.pavilionHeight;
-
-// Огранка несимметрична: павильон длиннее короны, поэтому геометрический
-// центр смещён вниз. Без поправки объект висел бы выше середины кадра
-// и вращался бы вокруг точки внутри короны.
-const CENTER_OFFSET = -(TOP + BOTTOM) / 2;
-
 export function Crystal({
   pointer,
   lift,
   reducedMotion = false,
+  seed = CRYSTAL.seed,
+  tint = DEFAULT_TINT,
   rotationSpeed = OBJECT.idleRotationSpeed,
   tiltMax = OBJECT.tiltMax,
 }: {
@@ -44,6 +38,9 @@ export function Crystal({
   /** 0 — объект в центре, 1 — уехал вверх за край. Ведёт таймлайн панели. */
   lift?: RefObject<{ value: number }>;
   reducedMotion?: boolean;
+  /** Зерно генератора формы. Меняешь — получаешь другой кристалл. */
+  seed?: number;
+  tint?: CrystalTintKey;
   /** Подмена значений из OBJECT — нужна стенду, чтобы подбирать их глазами. */
   rotationSpeed?: number;
   tiltMax?: number;
@@ -51,25 +48,32 @@ export function Crystal({
   const group = useRef<Group>(null);
   const tilt = useRef({ x: 0, y: 0 });
 
-  const material = useMemo(
-    () =>
-      new MeshPhysicalMaterial({
-        color: SURFACE.object,
-        roughness: GEM_MATERIAL.roughness,
-        metalness: GEM_MATERIAL.metalness,
-        clearcoat: GEM_MATERIAL.clearcoat,
-        clearcoatRoughness: GEM_MATERIAL.clearcoatRoughness,
-        iridescence: GEM_MATERIAL.iridescence,
-        iridescenceIOR: GEM_MATERIAL.iridescenceIOR,
-        iridescenceThicknessRange: [
-          GEM_MATERIAL.iridescenceThickness[0],
-          GEM_MATERIAL.iridescenceThickness[1],
-        ],
-        envMapIntensity: ENVIRONMENT.intensity,
-        flatShading: true,
-      }),
-    [],
-  );
+  const geometry = useMemo(() => createCrystalGeometry({ ...CRYSTAL, seed }), [seed]);
+  useEffect(() => () => geometry.dispose(), [geometry]);
+
+  const material = useMemo(() => {
+    const { color, distance } = CRYSTAL_TINTS[tint];
+
+    return new MeshPhysicalMaterial({
+      // Тело белое: цвет даёт затухание внутри стекла, а не краска снаружи.
+      color: '#ffffff',
+      transmission: GLASS.transmission,
+      thickness: GLASS.thickness,
+      ior: GLASS.ior,
+      roughness: GLASS.roughness,
+      metalness: GLASS.metalness,
+      dispersion: GLASS.dispersion,
+      attenuationColor: color,
+      attenuationDistance: distance,
+      clearcoat: GLASS.clearcoat,
+      clearcoatRoughness: GLASS.clearcoatRoughness,
+      iridescence: GLASS.iridescence,
+      iridescenceIOR: GLASS.iridescenceIOR,
+      iridescenceThicknessRange: [GLASS.iridescenceThickness[0], GLASS.iridescenceThickness[1]],
+      envMapIntensity: ENVIRONMENT.intensity,
+      flatShading: true,
+    });
+  }, [tint]);
 
   useEffect(() => () => material.dispose(), [material]);
 
@@ -109,31 +113,7 @@ export function Crystal({
 
   return (
     <group ref={group}>
-      <group position-y={CENTER_OFFSET}>
-        {/* Вершина */}
-        <mesh material={material} position={[0, APEX_Y, 0]}>
-          <cylinderGeometry args={[0, GEM.shoulderRadius, GEM.apexHeight, GEM.sides]} />
-        </mesh>
-
-        {/* Корона: второй ряд граней, из-за него верх не выглядит конусом */}
-        <mesh material={material} position={[0, CROWN_Y, 0]}>
-          <cylinderGeometry
-            args={[GEM.shoulderRadius, GEM.girdleRadius, GEM.crownHeight, GEM.sides]}
-          />
-        </mesh>
-
-        {/* Поясок — самое широкое место */}
-        <mesh material={material}>
-          <cylinderGeometry
-            args={[GEM.girdleRadius, GEM.girdleRadius, GEM.girdleHeight, GEM.sides]}
-          />
-        </mesh>
-
-        {/* Павильон: длинный клин вниз, он и делает силуэт каплей */}
-        <mesh material={material} position={[0, PAVILION_Y, 0]}>
-          <cylinderGeometry args={[GEM.girdleRadius, 0, GEM.pavilionHeight, GEM.sides]} />
-        </mesh>
-      </group>
+      <mesh geometry={geometry} material={material} />
     </group>
   );
 }

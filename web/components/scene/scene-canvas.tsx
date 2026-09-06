@@ -3,32 +3,43 @@
 import { Canvas } from '@react-three/fiber';
 import { useEffect, useState, type RefObject } from 'react';
 import { supportsWebGl2 } from '@/lib/device';
-import { LIGHTS, SCENE_CAMERA } from '@/lib/scene-constants';
+import { LIGHTS, SCENE_CAMERA, type CrystalTintKey } from '@/lib/scene-constants';
 import type { PointerNdc } from '@/lib/use-pointer-ndc';
 import { Crystal } from './crystal';
 import { Halo } from './halo';
+import { SceneBackground } from './scene-background';
 import { SceneEnvironment } from './scene-environment';
 
 /**
  * Единственная сцена three.js на всё приложение. Она не пересоздаётся при
  * смене секции: меняются положение объекта и цвет фона, а сцена живёт.
  *
- * Canvas прозрачный — заливка и зерно лежат под ним в DOM. Поэтому при
- * отсутствии WebGL страница теряет ровно объект и ореол, а фон, текст
- * и навигация остаются на месте.
+ * Canvas стоит между двумя слоями фона — заливкой снизу и зерном сверху.
+ * Заливка нужна на случай отсутствия WebGL: тогда canvas'а нет вовсе,
+ * а страница остаётся цветной. Зерно поверх ложится на весь кадр, включая
+ * кристалл, — иначе объект выглядел бы наклеенным на плёнку, а не снятым
+ * на неё.
  */
 export function SceneCanvas({
   className,
+  color,
   pointer,
   lift,
   reducedMotion = false,
+  seed,
+  tint,
   rotationSpeed,
   tiltMax,
 }: {
   className?: string;
+  /** Цвет секции. Уходит в фон сцены — его и преломляет стекло. */
+  color: string;
   pointer?: RefObject<PointerNdc>;
   lift?: RefObject<{ value: number }>;
   reducedMotion?: boolean;
+  /** Зерно генератора формы кристалла. */
+  seed?: number;
+  tint?: CrystalTintKey;
   /** Подмена значений из OBJECT — нужна стенду, чтобы подбирать их глазами. */
   rotationSpeed?: number;
   tiltMax?: number;
@@ -63,9 +74,10 @@ export function SceneCanvas({
           near: SCENE_CAMERA.near,
           far: SCENE_CAMERA.far,
         }}
-        gl={{ alpha: true, antialias: true }}
+        gl={{ antialias: true }}
         dpr={[1, 2]}
       >
+        <SceneBackground color={color} />
         <SceneEnvironment />
 
         <ambientLight intensity={LIGHTS.ambient} />
@@ -76,6 +88,8 @@ export function SceneCanvas({
           pointer={pointer}
           lift={lift}
           reducedMotion={reducedMotion}
+          seed={seed}
+          tint={tint}
           rotationSpeed={rotationSpeed}
           tiltMax={tiltMax}
         />

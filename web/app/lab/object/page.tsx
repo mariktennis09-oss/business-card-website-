@@ -6,23 +6,30 @@ import { Backdrop } from '@/components/scene/backdrop';
 import { SceneCanvas } from '@/components/scene/scene-canvas';
 import {
   BACKDROP,
+  CRYSTAL,
+  CRYSTAL_TINTS,
+  DEFAULT_TINT,
   OBJECT,
   OBJECT_PRESETS,
   SECTION_COLORS,
   SURFACE,
+  type CrystalTintKey,
   type SectionColorKey,
 } from '@/lib/scene-constants';
 import { usePointerNdc } from '@/lib/use-pointer-ndc';
 
 const COLOR_KEYS = Object.keys(SECTION_COLORS) as SectionColorKey[];
+const TINT_KEYS = Object.keys(CRYSTAL_TINTS) as CrystalTintKey[];
 
 /**
- * Стенд шага 3: объект в сцене поверх заливки. Вращение, покачивание, ореол
- * и доворот за курсором — всё, что он умеет сам, без панели и переходов.
+ * Стенд шага 3: объект в сцене поверх заливки. Форма, стекло, вращение,
+ * покачивание, ореол и доворот за курсором — всё, что кристалл умеет сам,
+ * без панели и переходов.
  *
- * Скорость и размах доворота переключаются здесь же: подобрать их глазами
- * быстрее, чем описывать словами и переводить в числа. Выбранные значения
- * переезжают в OBJECT, стенд остаётся для проверки.
+ * Зерно генератора, цвет, скорость и размах доворота переключаются здесь
+ * же: подобрать их глазами быстрее, чем описывать словами и переводить
+ * в числа. Выбранные значения переезжают в константы, стенд остаётся
+ * для проверки.
  *
  * Кнопка «поднять» дёргает ту же величину, которой на странице будет
  * распоряжаться таймлайн открытия панели: проверить движение проще здесь,
@@ -35,6 +42,8 @@ export default function ObjectLabPage() {
 
   const [color, setColor] = useState<SectionColorKey>('home');
   const [lifted, setLifted] = useState(false);
+  const [seed, setSeed] = useState<number>(CRYSTAL.seed);
+  const [tint, setTint] = useState<CrystalTintKey>(DEFAULT_TINT);
   const [speed, setSpeed] = useState<number>(OBJECT.idleRotationSpeed);
   const [tiltMax, setTiltMax] = useState<number>(OBJECT.tiltMax);
 
@@ -60,9 +69,12 @@ export default function ObjectLabPage() {
     <main className="relative h-dvh w-full" style={{ color: SURFACE.text }}>
       <Backdrop fillRef={fill} initialColor={SECTION_COLORS.home} />
       <SceneCanvas
-        className="fixed inset-0 -z-10"
+        className="fixed inset-0 -z-20"
+        color={SECTION_COLORS[color]}
         pointer={pointer}
         lift={lift}
+        seed={seed}
+        tint={tint}
         rotationSpeed={speed}
         tiltMax={tiltMax}
       />
@@ -71,6 +83,23 @@ export default function ObjectLabPage() {
         <p className="font-mono text-xs tracking-[0.16em] uppercase">Object — isolated</p>
 
         <div className="pointer-events-auto flex flex-col gap-5">
+          <Row label={`Форма · ${seed}`}>
+            <Chip active onClick={() => setSeed((value) => value + 1)}>
+              другой кристалл
+            </Chip>
+            <Chip active={seed === CRYSTAL.seed} onClick={() => setSeed(CRYSTAL.seed)}>
+              вернуть {CRYSTAL.seed}
+            </Chip>
+          </Row>
+
+          <Row label="Цвет камня">
+            {TINT_KEYS.map((key) => (
+              <Chip key={key} active={key === tint} onClick={() => setTint(key)}>
+                {CRYSTAL_TINTS[key].label}
+              </Chip>
+            ))}
+          </Row>
+
           <Row label="Цвет секции">
             {COLOR_KEYS.map((key) => (
               <Chip key={key} active={key === color} onClick={() => switchColor(key)}>
@@ -115,7 +144,7 @@ export default function ObjectLabPage() {
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <span className="w-32 font-mono text-[11px] tracking-[0.16em] uppercase opacity-70">
+      <span className="w-36 font-mono text-[11px] tracking-[0.16em] uppercase opacity-70">
         {label}
       </span>
       {children}
