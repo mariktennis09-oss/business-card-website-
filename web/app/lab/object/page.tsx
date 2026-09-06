@@ -4,14 +4,25 @@ import gsap from 'gsap';
 import { useRef, useState } from 'react';
 import { Backdrop } from '@/components/scene/backdrop';
 import { SceneCanvas } from '@/components/scene/scene-canvas';
-import { BACKDROP, SECTION_COLORS, SURFACE, type SectionColorKey } from '@/lib/scene-constants';
+import {
+  BACKDROP,
+  OBJECT,
+  OBJECT_PRESETS,
+  SECTION_COLORS,
+  SURFACE,
+  type SectionColorKey,
+} from '@/lib/scene-constants';
 import { usePointerNdc } from '@/lib/use-pointer-ndc';
 
 const COLOR_KEYS = Object.keys(SECTION_COLORS) as SectionColorKey[];
 
 /**
- * Стенд шага 3: объект в сцене поверх заливки. Вращение, покачивание, тень
+ * Стенд шага 3: объект в сцене поверх заливки. Вращение, покачивание, ореол
  * и доворот за курсором — всё, что он умеет сам, без панели и переходов.
+ *
+ * Скорость и размах доворота переключаются здесь же: подобрать их глазами
+ * быстрее, чем описывать словами и переводить в числа. Выбранные значения
+ * переезжают в OBJECT, стенд остаётся для проверки.
  *
  * Кнопка «поднять» дёргает ту же величину, которой на странице будет
  * распоряжаться таймлайн открытия панели: проверить движение проще здесь,
@@ -24,6 +35,8 @@ export default function ObjectLabPage() {
 
   const [color, setColor] = useState<SectionColorKey>('home');
   const [lifted, setLifted] = useState(false);
+  const [speed, setSpeed] = useState<number>(OBJECT.idleRotationSpeed);
+  const [tiltMax, setTiltMax] = useState<number>(OBJECT.tiltMax);
 
   function switchColor(key: SectionColorKey) {
     setColor(key);
@@ -46,24 +59,67 @@ export default function ObjectLabPage() {
   return (
     <main className="relative h-dvh w-full" style={{ color: SURFACE.text }}>
       <Backdrop fillRef={fill} initialColor={SECTION_COLORS.home} />
-      <SceneCanvas className="fixed inset-0 -z-10" pointer={pointer} lift={lift} />
+      <SceneCanvas
+        className="fixed inset-0 -z-10"
+        pointer={pointer}
+        lift={lift}
+        rotationSpeed={speed}
+        tiltMax={tiltMax}
+      />
 
       <div className="pointer-events-none flex h-full flex-col justify-between p-6 sm:p-8">
         <p className="font-mono text-xs tracking-[0.16em] uppercase">Object — isolated</p>
 
-        <div className="pointer-events-auto flex flex-wrap items-center gap-3">
-          {COLOR_KEYS.map((key) => (
-            <Chip key={key} active={key === color} onClick={() => switchColor(key)}>
-              {key}
-            </Chip>
-          ))}
+        <div className="pointer-events-auto flex flex-col gap-5">
+          <Row label="Цвет секции">
+            {COLOR_KEYS.map((key) => (
+              <Chip key={key} active={key === color} onClick={() => switchColor(key)}>
+                {key}
+              </Chip>
+            ))}
 
-          <Chip active={lifted} onClick={toggleLift}>
-            {lifted ? 'опустить' : 'поднять'}
-          </Chip>
+            <Chip active={lifted} onClick={toggleLift}>
+              {lifted ? 'опустить' : 'поднять'}
+            </Chip>
+          </Row>
+
+          <Row label="Вращение">
+            {OBJECT_PRESETS.rotation.map((preset) => (
+              <Chip
+                key={preset.label}
+                active={preset.speed === speed}
+                onClick={() => setSpeed(preset.speed)}
+              >
+                {preset.label} · {preset.speed}
+              </Chip>
+            ))}
+          </Row>
+
+          <Row label="Доворот">
+            {OBJECT_PRESETS.tilt.map((preset) => (
+              <Chip
+                key={preset.label}
+                active={preset.max === tiltMax}
+                onClick={() => setTiltMax(preset.max)}
+              >
+                {preset.label} · {preset.max}
+              </Chip>
+            ))}
+          </Row>
         </div>
       </div>
     </main>
+  );
+}
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <span className="w-32 font-mono text-[11px] tracking-[0.16em] uppercase opacity-70">
+        {label}
+      </span>
+      {children}
+    </div>
   );
 }
 

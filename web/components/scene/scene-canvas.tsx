@@ -6,14 +6,15 @@ import { supportsWebGl2 } from '@/lib/device';
 import { LIGHTS, SCENE_CAMERA } from '@/lib/scene-constants';
 import type { PointerNdc } from '@/lib/use-pointer-ndc';
 import { Crystal } from './crystal';
-import { GroundShadow } from './ground-shadow';
+import { Halo } from './halo';
+import { SceneEnvironment } from './scene-environment';
 
 /**
  * Единственная сцена three.js на всё приложение. Она не пересоздаётся при
  * смене секции: меняются положение объекта и цвет фона, а сцена живёт.
  *
  * Canvas прозрачный — заливка и зерно лежат под ним в DOM. Поэтому при
- * отсутствии WebGL страница теряет ровно объект и тень, а фон, текст
+ * отсутствии WebGL страница теряет ровно объект и ореол, а фон, текст
  * и навигация остаются на месте.
  */
 export function SceneCanvas({
@@ -21,11 +22,16 @@ export function SceneCanvas({
   pointer,
   lift,
   reducedMotion = false,
+  rotationSpeed,
+  tiltMax,
 }: {
   className?: string;
   pointer?: RefObject<PointerNdc>;
   lift?: RefObject<{ value: number }>;
   reducedMotion?: boolean;
+  /** Подмена значений из OBJECT — нужна стенду, чтобы подбирать их глазами. */
+  rotationSpeed?: number;
+  tiltMax?: number;
 }) {
   const [visible, setVisible] = useState(true);
   const [webglReady, setWebglReady] = useState<boolean | null>(null);
@@ -60,11 +66,19 @@ export function SceneCanvas({
         gl={{ alpha: true, antialias: true }}
         dpr={[1, 2]}
       >
+        <SceneEnvironment />
+
         <ambientLight intensity={LIGHTS.ambient} />
         <directionalLight intensity={LIGHTS.key} position={[...LIGHTS.keyPosition]} />
 
-        <GroundShadow lift={lift} reducedMotion={reducedMotion} />
-        <Crystal pointer={pointer} lift={lift} reducedMotion={reducedMotion} />
+        <Halo lift={lift} reducedMotion={reducedMotion} />
+        <Crystal
+          pointer={pointer}
+          lift={lift}
+          reducedMotion={reducedMotion}
+          rotationSpeed={rotationSpeed}
+          tiltMax={tiltMax}
+        />
       </Canvas>
     </div>
   );
